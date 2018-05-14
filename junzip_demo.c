@@ -9,19 +9,22 @@
 #include <sys/stat.h>
 #include "junzip.h"
 #include "liblist.h"
-int debug = 1;
+
+int debug = 0;
 static int ilib = 0;
 libList liboutput[MAX];
 
 void updateabiinfo(){
 	int i = 0;
 	for(i=0;i<ilib;i++){
-				abidetail(liboutput[i].libname);
+//				abidetail(liboutput[i].libname);
+				abidetail(&liboutput[i]);
 	}
 }
 
 void display(libList a[]){
 	int i = 0;
+		printf("===================================================\n");
 		printf("Total Number of Libraries: %d\n",ilib);
 		printf("===================================================\n");
 		printf("File \t\t\t\t\t  ArchType\n");
@@ -33,27 +36,23 @@ void display(libList a[]){
 	}
 		printf("===================================================\n");
 }
+
 int matchPatternFromEnd(char str[],char pat[]){
 
 	int slen = 0;
 	int plen = 0;
-	int sIdx = 0,i=0,j=0;
-	int fl = -1;
+	int sIdx = 0,j=0;
 	slen = strlen(str);
 	plen = strlen(pat);
-	if(debug)
-	printf("\t\t%d Src: %s, Pat: %s\n",__LINE__, str, pat);
+	PRINTF(debug,Src: %s Pat: %s, str, pat);
 	if(slen < plen){
-	if(debug)
-		printf("%d ERROR slen:%d plen:%d\n",__LINE__,slen,plen);
-		return -1;
+			printf("%s %d ERROR slen:%d plen:%d\n",__FILE__,__LINE__,slen,plen);
+			return -1;
 	}
 	sIdx = slen - plen;
-	if(debug)
-	printf("\t\t%d Src: %s, Pat: %s\n",__LINE__, str, pat);
+			PRINTF(debug,Src: %c Pat: %c,str[sIdx], pat[j]);
 		for(j=0;j< plen;j++){
-	if(debug)
-			printf("\t\t%d Src: %c, Pat: %c\n",__LINE__,str[sIdx], pat[j]);
+	//		PRINTF(debug,Src: %c, Pat: %c,str[sIdx], pat[j]);
 			if(pat[j]==str[sIdx]){ 
 					sIdx++;
 					continue;
@@ -61,8 +60,7 @@ int matchPatternFromEnd(char str[],char pat[]){
 					return 0;
 				}
 		}
-	if(debug)
-		printf("Slen:%d, sIdx %d \n",slen,sIdx);
+		PRINTF(debug,Src: %c Pat: %c,str[sIdx], pat[j]);
 
 	if(sIdx==slen){return 1;}
 	else{ return 0; }
@@ -82,10 +80,9 @@ int isFileExists(const char * filename){
 // and returns 1 if you want directory support
 int makeDirectory(char *dir) {
     int ret =0;
-		printf("mkdir(%s)  %d\n", dir,isFileExists(dir));
+		PRINTF(debug, mkdir(%s)  %d, dir,isFileExists(dir));
 		if(!isFileExists(dir)){
 			ret = mkdir(dir,ACCESSPERMS);
-			printf("Hello---> %d\n",ret);
 			if(ret == 0){
    			 return 1;
 			}
@@ -105,9 +102,8 @@ void writeFile(char *filename, void *data, long bytes) {
 
         filename[i] = '\0'; // terminate string at this point
 				ret = makeDirectory(filename);
-        if(0==ret) {
-            fprintf(stderr, "Couldn't create subdirectory %s!\n", filename);
-            //return;
+        if(1==ret) {
+            fprintf(stderr, "Successfully created subdirectory %s!\n", filename);
         }
 
         filename[i] = '/'; // Put the separator back
@@ -141,8 +137,7 @@ int processFile(JZFile *zip) {
         return -1;
     }
 
-    printf("%s, %d / %d bytes at offset %08X\n", filename,
-            header.compressedSize, header.uncompressedSize, header.offset);
+    PRINTF(debug,%s %d / %d bytes at offset %08X, filename,header.compressedSize, header.uncompressedSize, header.offset);
 
     if(jzReadData(zip, &header, data) != Z_OK) {
         printf("Couldn't read file data!");
@@ -150,10 +145,9 @@ int processFile(JZFile *zip) {
         return -1;
     }
 
-		if(debug)
-			printf("%d:\tFileName: %s\n",__LINE__,filename); 
+		PRINTF(debug,FileName: %s,filename); 
 		if(matchPatternFromEnd(filename,".so")){
-				printf("\t\t%d:\tFileName: %s\n",__LINE__,filename); 
+				PRINTF(debug,FileName: %s,filename); 
 				strcpy(liboutput[ilib].libname,filename);
 				liboutput[ilib].libcnt = ilib+1;
 				ilib++;
@@ -214,8 +208,8 @@ int main(int argc, char *argv[]) {
 
     //Alternative method to go through zip after opening it:
     //while(!processFile(zip)) {}
-		display(liboutput);
 		updateabiinfo();
+		display(liboutput);
     retval = 0;
 
 endClose:

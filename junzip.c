@@ -3,11 +3,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include <zlib.h>
-
 #include "junzip.h"
+#include "liblist.h"
 
+extern int debug;
 unsigned char jzBuffer[JZ_BUFFER_SIZE]; // limits maximum zip descriptor size
 
 // Read ZIP file end record. Will move within file.
@@ -123,6 +123,7 @@ int jzReadLocalFileHeader(JZFile *zip, JZFileHeader *header,
             sizeof(JZLocalFileHeader))
         return Z_ERRNO;
 
+	
     if(localHeader.signature != 0x04034B50)
         return Z_ERRNO;
 
